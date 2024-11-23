@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гра Змійка</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        canvas {
+            border: 1px solid black;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const scale = 20; // Розмір кожної клітинки
+        const rows = canvas.height / scale;
+        const columns = canvas.width / scale;
+
+        let snake;
+        let food;
+        let score;
+        let direction;
+
+        function init() {
+            snake = [{
+                x: 5 * scale,
+                y: 5 * scale
+            }];
+            food = spawnFood();
+            score = 0;
+            direction = "right";
+            document.addEventListener("keydown", changeDirection);
+            gameLoop();
+        }
+
+        function gameLoop() {
+            setTimeout(() => {
+                clearCanvas();
+                drawFood();
+                moveSnake();
+                checkCollision();
+                drawSnake();
+                drawScore();
+                gameLoop();
+            }, 100);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawSnake() {
+            snake.forEach((segment, index) => {
+                ctx.fillStyle = index === 0 ? "green" : "lightgreen";
+                ctx.fillRect(segment.x, segment.y, scale, scale);
+            });
+        }
+
+        function moveSnake() {
+            const head = { ...snake[0] };
+
+            if (direction === "up") head.y -= scale;
+            if (direction === "down") head.y += scale;
+            if (direction === "left") head.x -= scale;
+            if (direction === "right") head.x += scale;
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                food = spawnFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function checkCollision() {
+            const head = snake[0];
+
+            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
+                resetGame();
+            }
+
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    resetGame();
+                }
+            }
+        }
+
+        function spawnFood() {
+            let foodX = Math.floor(Math.random() * rows) * scale;
+            let foodY = Math.floor(Math.random() * columns) * scale;
+
+            return { x: foodX, y: foodY };
+        }
+
+        function drawFood() {
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, scale, scale);
+        }
+
+        function changeDirection(event) {
+            if (event.key === "ArrowUp" && direction !== "down") {
+                direction = "up";
+            } else if (event.key === "ArrowDown" && direction !== "up") {
+                direction = "down";
+            } else if (event.key === "ArrowLeft" && direction !== "right") {
+                direction = "left";
+            } else if (event.key === "ArrowRight" && direction !== "left") {
+                direction = "right";
+            }
+        }
+
+        function drawScore() {
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Score: " + score, 10, 20);
+        }
+
+        function resetGame() {
+            score = 0;
+            snake = [{
+                x: 5 * scale,
+                y: 5 * scale
+            }];
+            food = spawnFood();
+            direction = "right";
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -3,147 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Гра Змійка</title>
+    <title>Гра: Вгадай число</title>
     <style>
         body {
-            margin: 0;
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f4f4f4;
+            margin: 0;
+            background-color: #f0f0f0;
         }
 
-        canvas {
-            border: 1px solid black;
-            background-color: #000;
+        .game-container {
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            font-size: 18px;
+            width: 100%;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .win {
+            color: green;
+        }
+
+        .lose {
+            color: red;
+        }
+
+        .hint {
+            color: blue;
         }
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
 
-    <script>
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
+<div class="game-container">
+    <h1>Вгадай число</h1>
+    <p>Я загадав число від 1 до 100. Спробуй вгадати!</p>
+    <input type="number" id="guess" min="1" max="100" placeholder="Введіть число">
+    <button onclick="checkGuess()">Перевірити</button>
+    <div id="message" class="message"></div>
+    <div id="hint" class="message"></div>
+</div>
 
-        const scale = 20; // Розмір кожної клітинки
-        const rows = canvas.height / scale;
-        const columns = canvas.width / scale;
+<script>
+    let secretNumber = Math.floor(Math.random() * 100) + 1;
+    let attempts = 0;
 
-        let snake;
-        let food;
-        let score;
-        let direction;
+    function checkGuess() {
+        const guess = document.getElementById("guess").value;
+        const message = document.getElementById("message");
+        const hint = document.getElementById("hint");
 
-        function init() {
-            snake = [{
-                x: 5 * scale,
-                y: 5 * scale
-            }];
-            food = spawnFood();
-            score = 0;
-            direction = "right";
-            document.addEventListener("keydown", changeDirection);
-            gameLoop();
+        if (guess === "") {
+            message.textContent = "Будь ласка, введіть число!";
+            return;
         }
 
-        function gameLoop() {
-            setTimeout(() => {
-                clearCanvas();
-                drawFood();
-                moveSnake();
-                checkCollision();
-                drawSnake();
-                drawScore();
-                gameLoop();
-            }, 100);
+        attempts++;
+
+        if (guess < secretNumber) {
+            message.textContent = "Загадане число більше!";
+            message.className = "message";
+            hint.textContent = `Спробуйте число більше за ${guess}.`;
+            hint.className = "hint";
+        } else if (guess > secretNumber) {
+            message.textContent = "Загадане число менше!";
+            message.className = "message";
+            hint.textContent = `Спробуйте число менше за ${guess}.`;
+            hint.className = "hint";
+        } else {
+            message.textContent = `Вітаємо! Ви вгадали число за ${attempts} спроб.`;
+            message.className = "message win";
+            hint.textContent = "";
         }
+    }
+</script>
 
-        function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function drawSnake() {
-            snake.forEach((segment, index) => {
-                ctx.fillStyle = index === 0 ? "green" : "lightgreen";
-                ctx.fillRect(segment.x, segment.y, scale, scale);
-            });
-        }
-
-        function moveSnake() {
-            const head = { ...snake[0] };
-
-            if (direction === "up") head.y -= scale;
-            if (direction === "down") head.y += scale;
-            if (direction === "left") head.x -= scale;
-            if (direction === "right") head.x += scale;
-
-            snake.unshift(head);
-
-            if (head.x === food.x && head.y === food.y) {
-                score++;
-                food = spawnFood();
-            } else {
-                snake.pop();
-            }
-        }
-
-        function checkCollision() {
-            const head = snake[0];
-
-            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height) {
-                resetGame();
-            }
-
-            for (let i = 1; i < snake.length; i++) {
-                if (head.x === snake[i].x && head.y === snake[i].y) {
-                    resetGame();
-                }
-            }
-        }
-
-        function spawnFood() {
-            let foodX = Math.floor(Math.random() * rows) * scale;
-            let foodY = Math.floor(Math.random() * columns) * scale;
-
-            return { x: foodX, y: foodY };
-        }
-
-        function drawFood() {
-            ctx.fillStyle = "red";
-            ctx.fillRect(food.x, food.y, scale, scale);
-        }
-
-        function changeDirection(event) {
-            if (event.key === "ArrowUp" && direction !== "down") {
-                direction = "up";
-            } else if (event.key === "ArrowDown" && direction !== "up") {
-                direction = "down";
-            } else if (event.key === "ArrowLeft" && direction !== "right") {
-                direction = "left";
-            } else if (event.key === "ArrowRight" && direction !== "left") {
-                direction = "right";
-            }
-        }
-
-        function drawScore() {
-            ctx.fillStyle = "white";
-            ctx.font = "20px Arial";
-            ctx.fillText("Score: " + score, 10, 20);
-        }
-
-        function resetGame() {
-            score = 0;
-            snake = [{
-                x: 5 * scale,
-                y: 5 * scale
-            }];
-            food = spawnFood();
-            direction = "right";
-        }
-
-        init();
-    </script>
 </body>
 </html>
